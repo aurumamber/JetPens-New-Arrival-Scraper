@@ -54,6 +54,8 @@ def run():
 # run program every day
 schedule.every().day.at("00:00").do(run)
 
+# create xml on run
+run()
 while True:
     schedule.run_pending()
     time.sleep(1)
