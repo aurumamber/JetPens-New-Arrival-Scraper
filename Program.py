@@ -33,16 +33,15 @@ def parse_to_products():
 
 def products_to_xml():
     fg = FeedGenerator()
-    fg.title("Test Feed")
-    fg.link(href="url")
-    fg.description("feed")
+    fg.title("JetPens New Arrivals")
+    fg.link(href="")
+    fg.description("New Arrivals from JetPens")
     for obj in reversed(ProductList):
         fe = fg.add_entry()
         fe.title(obj.productName)
         fe.link(href=obj.productLink)
         fe.description(obj.productPrice)
-    rssfeed = fg.rss_str(pretty=True)
-    fg.rss_file("test.xml")
+    fg.rss_file("test.xml", pretty=True)
 
 
 parse_to_products()
