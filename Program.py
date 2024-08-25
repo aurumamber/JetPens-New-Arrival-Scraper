@@ -5,8 +5,6 @@ import schedule
 import time
 
 # product object containing name, product link, and price
-
-
 class ProductInfo:
     def __init__(self, product_name, product_link, product_price):
         self.productName = product_name
