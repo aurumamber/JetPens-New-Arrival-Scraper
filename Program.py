@@ -1,7 +1,10 @@
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
-from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
+import schedule
+import time
+
+# product object containing name, product link, and price
 
 
 class ProductInfo:
@@ -10,10 +13,11 @@ class ProductInfo:
         self.productLink = product_link
         self.productPrice = product_price
 
-
+# array of product objects
 ProductList = []
 
 
+# get webpage html, get products from page
 def parse_to_products():
     request = requests.get("https://www.jetpens.com/cPath/new")
     soup = BeautifulSoup(request.text, "html.parser")
@@ -31,10 +35,11 @@ def parse_to_products():
         print(obj.productPrice)
 
 
+# create rss feed from product array
 def products_to_xml():
     fg = FeedGenerator()
     fg.title("JetPens New Arrivals")
-    fg.link(href="")
+    fg.link(href="url")
     fg.description("New Arrivals from JetPens")
     for obj in reversed(ProductList):
         fe = fg.add_entry()
@@ -44,6 +49,13 @@ def products_to_xml():
     fg.rss_file("test.xml", pretty=True)
 
 
-parse_to_products()
-products_to_xml()
+def run():
+    parse_to_products()
+    products_to_xml()
 
+# run program every day
+schedule.every().day.at("00:00").do(run)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
