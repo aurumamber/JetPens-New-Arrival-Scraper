@@ -20,19 +20,26 @@ def parse_to_products():
     url = "https://www.jetpens.com/cPath/new?pn="
     page = 1
     request = requests.get(url)
-    soup = BeautifulSoup(request.text, "html.parser")
-    product_listing = soup.find_all(class_="pure-u-1-2 pure-u-sm-1-2 pure-u-md-1-3 pure-u-lg-1-4 product")
+    while request.status_code != 404:
+        soup = BeautifulSoup(request.text, "html.parser")
+        product_listing = soup.find_all(class_="pure-u-1-2 pure-u-sm-1-2 pure-u-md-1-3 pure-u-lg-1-4 product")
 
-    for item in product_listing:
-        product = item.find_next(class_="product-name subtle").text
-        link = item.find_next(class_="product-name subtle")["href"]
-        price = item.find_next(class_="price").text
-        ProductList.append(ProductInfo(product, link, price))
+        for item in product_listing:
+            product = item.find_next(class_="product-name subtle").text
+            link = item.find_next(class_="product-name subtle")["href"]
+            price = item.find_next(class_="price").text
+            ProductList.append(ProductInfo(product, link, price))
 
-    for obj in ProductList:
-        print(obj.productName)
-        print(obj.productLink)
-        print(obj.productPrice)
+        for obj in ProductList:
+            print(obj.productName)
+            print(obj.productLink)
+            print(obj.productPrice)
+
+        # advance page
+        page += 1
+        url += str(page)
+        request = requests.get(url)
+
 
 
 # create rss feed from product array
@@ -46,7 +53,8 @@ def products_to_xml():
         fe.title(obj.productName)
         fe.link(href=obj.productLink)
         fe.description(obj.productPrice)
-    fg.rss_file("test.xml", pretty=True)
+        fe.guid(obj.productLink)
+    fg.rss_file("Feed.xml", pretty=True)
 
 
 def run():
