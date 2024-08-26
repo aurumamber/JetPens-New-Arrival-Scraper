@@ -17,7 +17,9 @@ ProductList = []
 
 # get webpage html, get products from page
 def parse_to_products():
-    request = requests.get("https://www.jetpens.com/cPath/new")
+    url = "https://www.jetpens.com/cPath/new?pn="
+    page = 1
+    request = requests.get(url)
     soup = BeautifulSoup(request.text, "html.parser")
     product_listing = soup.find_all(class_="pure-u-1-2 pure-u-sm-1-2 pure-u-md-1-3 pure-u-lg-1-4 product")
 
