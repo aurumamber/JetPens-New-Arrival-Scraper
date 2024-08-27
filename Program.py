@@ -1,8 +1,11 @@
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
+from datetime import datetime
 import requests
 import schedule
 import time
+import math
+import uuid
 
 # product object containing name, product link, and price
 class ProductInfo:
@@ -12,57 +15,66 @@ class ProductInfo:
         self.productPrice = product_price
 
 # array of product objects
-ProductList = []
+ProductStorage = []
 
 
-# get webpage html, get products from page
+# get webpage html, get new products from page
 def parse_to_products():
-    url = "https://www.jetpens.com/cPath/new?pn="
     page = 1
-    request = requests.get(url)
-    while request.status_code != 404:
+    while True:
+        url = f"https://www.jetpens.com/cPath/new?pn={page}"
+        request = requests.get(url)
         soup = BeautifulSoup(request.text, "html.parser")
-        product_listing = soup.find_all(class_="pure-u-1-2 pure-u-sm-1-2 pure-u-md-1-3 pure-u-lg-1-4 product")
-
-        for item in product_listing:
+        # get amount of items, to divide by items per page and find # of pages
+        num_of_items = int(soup.find(class_="pure-u-1-4 display-sm-none").text.strip("items"))
+        new_products = soup.find_all(class_=["pure-button product-image-tag new",
+                                             "pure-button product-image-tag limited"])
+        for item in new_products:
             product = item.find_next(class_="product-name subtle").text
             link = item.find_next(class_="product-name subtle")["href"]
             price = item.find_next(class_="price").text
-            ProductList.append(ProductInfo(product, link, price))
-
-        for obj in ProductList:
-            print(obj.productName)
-            print(obj.productLink)
-            print(obj.productPrice)
+            ProductStorage.append(ProductInfo(product, link, price))
 
         # advance page
-        page += 1
-        url += str(page)
-        request = requests.get(url)
+        page = page + 1
+        print(math.ceil(num_of_items / 48))
+        print(page)
+        # break when page count is equal to the rounded-up # of pages, found via dividing # of items by
+        # items per page (48)
+        if page == math.ceil(num_of_items / 48):
+            break
 
 
+# create rss file from product array
+def new_arrivals_to_xml():
+    new_arrivals_string = ""
+    for obj in ProductStorage:
+        new_arrivals_string += obj.productName + "<br>"
+        new_arrivals_string += f"<a href=\"{obj.productLink}\"> Link to Product </a>" + "<br>"
+        new_arrivals_string += obj.productPrice + "<br>"
 
-# create rss feed from product array
-def products_to_xml():
     fg = FeedGenerator()
     fg.title("JetPens New Arrivals")
     fg.link(href="url")
     fg.description("New Arrivals from JetPens")
-    for obj in reversed(ProductList):
-        fe = fg.add_entry()
-        fe.title(obj.productName)
-        fe.link(href=obj.productLink)
-        fe.description(obj.productPrice)
-        fe.guid(obj.productLink)
+
+    fe = fg.add_entry()
+    fe.title("New Arrivals from JetPens: " + datetime.today().strftime("%x"))
+    fe.description("New Arrivals from JetPens: " + datetime.today().strftime("%x"))
+    fe.content(new_arrivals_string)
+    fe.guid(str(uuid.uuid4()))
     fg.rss_file("Feed.xml", pretty=True)
+
+    print(new_arrivals_string)
 
 
 def run():
     parse_to_products()
-    products_to_xml()
+    new_arrivals_to_xml()
+
 
 # run program every day
-schedule.every().day.at("00:00").do(run)
+schedule.every().second.do(run)
 
 # create xml on run
 run()
