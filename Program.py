@@ -72,9 +72,8 @@ def new_arrivals_to_xml():
     new_arrivals_string = ("<table>\n<tr>\n<th>Product</th>\n<th>Link</th>\n<th>Price</th>"
                            + new_arrivals_string
                            + "</tr>\n<table>")
-    EntryStorage.append(new_arrivals_string)
 
-    # items
+    # feed items
     fe = fg.add_entry()
     fe.title("New Arrivals from JetPens: " + datetime.today().strftime("%x"))
     fe.description("New Arrivals from JetPens: " + datetime.today().strftime("%x"))
