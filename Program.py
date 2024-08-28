@@ -6,7 +6,13 @@ import schedule
 import time
 import math
 import uuid
+import pickle
 import os.path
+
+dir = os.path.dirname(__file__)
+print(dir)
+filename = os.path.join(dir, "/Feed.xml")
+
 
 # product object containing name, product link, and price
 class ProductInfo:
@@ -15,8 +21,24 @@ class ProductInfo:
         self.productLink = product_link
         self.productPrice = product_price
 
-# array of product objects
+    def __eq__(self, other):
+        return (self.productName == other.productName and
+                self.productLink == other.productLink and
+                self.productPrice == other.productPrice)
+
+    def __hash__(self):
+        return hash((self.productName, self.productLink, self.productPrice))
+
+
+# lists of product objects
+ProductComparison = []
 ProductStorage = []
+# MAKE A COMPARISON ARRAY. COMPARE PRODUCT STORAGE AND THE COMPARISON ARRAY.
+# IF THEY MATCH 1:1, DO NOT MAKE A NEW FEED ENTRY.
+# IF ONLY SOME OF THE ITEMS MATCH, REMOVE THE MATCHING ITEMS, THEN COPY REMAINDER TO PRODUCT STORAGE AND
+# MAKE NEW ENTRY.
+# IF THEY DO NOT MATCH AT ALL, CLEAR PRODUCT STORAGE AND COPY THE CONTENTS OF COMPARISON ARRAY, AND MAKE NEW
+# FEED ENTRY
 
 
 # get webpage html, get new products from page
@@ -30,17 +52,16 @@ def parse_to_products():
         num_of_items = int(soup.find(class_="pure-u-1-4 display-sm-none").text.strip("items"))
         new_products = soup.find_all(class_=["pure-button product-image-tag new",
                                              "pure-button product-image-tag limited"])
-        # add items to array
+        # add items to list
         for item in new_products:
             product = item.find_next(class_="product-name subtle").text
             link = item.find_next(class_="product-name subtle")["href"]
             price = item.find_next(class_="price").text
-            if not item_exists(product, link, price):
-                ProductStorage.append(ProductInfo(product, link, price))
+            if ProductInfo(product, link, price) not in ProductComparison:
+                ProductComparison.append(ProductInfo(product, link, price))
 
         # advance page
-        page = page + 1
-        print(math.ceil(num_of_items / 48))
+        page += 1
         print(page)
         # break when page count is equal to the rounded-up # of pages, found via dividing # of items by
         # items per page (48)
@@ -48,45 +69,57 @@ def parse_to_products():
             break
 
 
-def item_exists(product, link, price):
-    for item in ProductStorage:
-        if product == item.productName and link == item.productLink and price == item.productPrice:
+def list_comparison():
+    for c in ProductComparison:
+        if c not in ProductStorage:
             return True
-        else:
-            return False
+    return False
 
 
-# create rss file from product array
-def new_arrivals_to_xml():
+def create_feed():
     fg = FeedGenerator()
     fg.title("JetPens New Arrivals")
     fg.link(href="url")
     fg.description("New Arrivals from JetPens")
+    fg.rss_file("Feed.xml")
+    with open("feed.obj", "wb") as f:
+        pickle.dump(fg, f)
+    print("guess we doin feeds now")
+
+
+# create rss file from product list
+def new_arrivals_to_feed():
+    # create feed if it doesn't exist
+    if not os.path.isfile("Feed.xml"):
+        create_feed()
 
     # content
     new_arrivals_string = ""
-    for obj in ProductStorage:
-        new_arrivals_string += "<tr>\n<td>" + obj.productName + "</td>"
-        new_arrivals_string += "<td>\n" + f"<a href=\"{obj.productLink}\"> Link to Product </a>" + "</td>"
-        new_arrivals_string += "<td>\n" + obj.productPrice + "</td>"
+    for item in ProductStorage:
+        new_arrivals_string += "<tr>\n<td>" + item.productName + "</td>"
+        new_arrivals_string += "<td>\n" + f"<a href=\"{item.productLink}\"> Link to Product </a>" + "</td>"
+        new_arrivals_string += "<td>\n" + item.productPrice + "</td>"
     new_arrivals_string = ("<table>\n<tr>\n<th>Product</th>\n<th>Link</th>\n<th>Price</th>"
                            + new_arrivals_string
                            + "</tr>\n<table>")
 
-    # feed items
-    fe = fg.add_entry()
-    fe.title("New Arrivals from JetPens: " + datetime.today().strftime("%x"))
-    fe.description("New Arrivals from JetPens: " + datetime.today().strftime("%x"))
-    fe.content(new_arrivals_string)
-    fe.guid(str(uuid.uuid4()))
-    fg.rss_file("Feed.xml", pretty=True)
-
-    print(new_arrivals_string)
+    # add entries
+    with open("feed.obj", "rb") as f:
+        fg = pickle.load(f)
+        fe = fg.add_entry()
+        fe.title("New Arrivals from JetPens: " + datetime.today().strftime("%X"))
+        fe.description("New Arrivals from JetPens: " + datetime.today().strftime("%X"))
+        fe.content(new_arrivals_string)
+        fe.guid(str(uuid.uuid4()))
+        fg.rss_file("Feed.xml", pretty=True)
+       # print(new_arrivals_string)
+    with open("feed.obj", "wb") as f:
+        pickle.dump(fg, f)
 
 
 def run():
     parse_to_products()
-    new_arrivals_to_xml()
+    new_arrivals_to_feed()
 
 
 # run program every day
