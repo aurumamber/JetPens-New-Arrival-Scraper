@@ -33,6 +33,7 @@ class ProductInfo:
 # lists of product objects
 ProductComparison = []
 ProductStorage = []
+NewProducts = []
 # MAKE A COMPARISON ARRAY. COMPARE PRODUCT STORAGE AND THE COMPARISON ARRAY.
 # IF THEY MATCH 1:1, DO NOT MAKE A NEW FEED ENTRY.
 # IF ONLY SOME OF THE ITEMS MATCH, REMOVE THE MATCHING ITEMS, THEN COPY REMAINDER TO PRODUCT STORAGE AND
@@ -70,10 +71,9 @@ def parse_to_products():
 
 
 def list_comparison():
-    for c in ProductComparison:
-        if c not in ProductStorage:
-            return True
-    return False
+    if ProductComparison == ProductStorage:
+        return
+
 
 
 def create_feed():
