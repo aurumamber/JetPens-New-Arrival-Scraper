@@ -124,7 +124,7 @@ def run():
 
 
 # run program every day
-schedule.every().second.do(run)
+schedule.every().day.at("00:00").do(run)
 
 # create xml on run
 if os.path.isfile("product_storage"):
