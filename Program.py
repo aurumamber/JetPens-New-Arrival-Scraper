@@ -35,6 +35,8 @@ ProductStorage = []
 
 def compare_to_storage():
     if ProductComparison == ProductStorage:
+        with open("product_storage", "wb") as fp:
+            pickle.dump(ProductStorage, fp)
         return True
     else:
         for item in ProductComparison:
@@ -42,6 +44,8 @@ def compare_to_storage():
                 ProductStorage.remove(item)
             else:
                 ProductStorage.append(item)
+        with open("product_storage", "wb") as fp:
+            pickle.dump(ProductStorage, fp)
         return False
 
 
@@ -78,7 +82,7 @@ def create_feed():
     fg.link(href="url")
     fg.description("New Arrivals from JetPens")
     fg.rss_file("Feed.xml")
-    with open("feed.obj", "wb") as f:
+    with open("feed", "wb") as f:
         pickle.dump(fg, f)
     print("guess we doin feeds now")
 
@@ -100,7 +104,7 @@ def new_arrivals_to_feed():
                            + "</tr>\n<table>")
 
     # add entries
-    with open("feed.obj", "rb") as f:
+    with open("feed", "rb") as f:
         fg = pickle.load(f)
         fe = fg.add_entry()
         fe.title("New Arrivals from JetPens: " + datetime.today().strftime("%c"))
@@ -109,7 +113,7 @@ def new_arrivals_to_feed():
         fe.guid(str(uuid.uuid4()))
         fg.rss_file("Feed.xml", pretty=True)
        # print(new_arrivals_string)
-    with open("feed.obj", "wb") as f:
+    with open("feed", "wb") as f:
         pickle.dump(fg, f)
 
 
@@ -123,6 +127,10 @@ def run():
 schedule.every().second.do(run)
 
 # create xml on run
+if os.path.isfile("product_storage"):
+    with open("product_storage", "rb") as fp:
+        ps = pickle.load(fp)
+        ProductStorage = ps
 run()
 while True:
     schedule.run_pending()
