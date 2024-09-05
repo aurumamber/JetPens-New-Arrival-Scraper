@@ -9,11 +9,6 @@ import uuid
 import pickle
 import os.path
 
-dir = os.path.dirname(__file__)
-print(dir)
-filename = os.path.join(dir, "/Feed.xml")
-
-
 # product object containing name, product link, and price
 class ProductInfo:
     def __init__(self, product_name, product_link, product_price):
@@ -33,13 +28,21 @@ class ProductInfo:
 # lists of product objects
 ProductComparison = []
 ProductStorage = []
-NewProducts = []
 # MAKE A COMPARISON ARRAY. COMPARE PRODUCT STORAGE AND THE COMPARISON ARRAY.
 # IF THEY MATCH 1:1, DO NOT MAKE A NEW FEED ENTRY.
 # IF ONLY SOME OF THE ITEMS MATCH, REMOVE THE MATCHING ITEMS, THEN COPY REMAINDER TO PRODUCT STORAGE AND
 # MAKE NEW ENTRY.
-# IF THEY DO NOT MATCH AT ALL, CLEAR PRODUCT STORAGE AND COPY THE CONTENTS OF COMPARISON ARRAY, AND MAKE NEW
-# FEED ENTRY
+
+def compare_to_storage():
+    if ProductComparison == ProductStorage:
+        return True
+    else:
+        for item in ProductComparison:
+            if item in ProductStorage:
+                ProductStorage.remove(item)
+            else:
+                ProductStorage.append(item)
+        return False
 
 
 # get webpage html, get new products from page
@@ -68,13 +71,6 @@ def parse_to_products():
         # items per page (48)
         if page == math.ceil(num_of_items / 48):
             break
-
-
-def list_comparison():
-    if ProductComparison == ProductStorage:
-        return
-
-
 
 def create_feed():
     fg = FeedGenerator()
@@ -119,11 +115,12 @@ def new_arrivals_to_feed():
 
 def run():
     parse_to_products()
-    new_arrivals_to_feed()
+    if not compare_to_storage():
+        new_arrivals_to_feed()
 
 
 # run program every day
-schedule.every().second.do(run)
+schedule.every().day.at("00:00").do(run)
 
 # create xml on run
 run()
