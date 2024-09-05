@@ -103,8 +103,8 @@ def new_arrivals_to_feed():
     with open("feed.obj", "rb") as f:
         fg = pickle.load(f)
         fe = fg.add_entry()
-        fe.title("New Arrivals from JetPens: " + datetime.today().strftime("%X"))
-        fe.description("New Arrivals from JetPens: " + datetime.today().strftime("%X"))
+        fe.title("New Arrivals from JetPens: " + datetime.today().strftime("%c"))
+        fe.description("New Arrivals from JetPens: " + datetime.today().strftime("%c"))
         fe.content(new_arrivals_string)
         fe.guid(str(uuid.uuid4()))
         fg.rss_file("Feed.xml", pretty=True)
@@ -120,7 +120,7 @@ def run():
 
 
 # run program every day
-schedule.every().day.at("00:00").do(run)
+schedule.every().second.do(run)
 
 # create xml on run
 run()
