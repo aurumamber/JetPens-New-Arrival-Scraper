@@ -9,7 +9,7 @@ import uuid
 import pickle
 import os.path
 
-# product object containing name, product link, and price
+# product class
 class ProductInfo:
     def __init__(self, product_name, product_link, product_price):
         self.productName = product_name
